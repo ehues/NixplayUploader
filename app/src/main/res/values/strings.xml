@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">NixplayUploader</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email or Username</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is too short</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email
+        completions."
+    </string>
+    <string name="image_to_share">Image to share</string>
+    <string name="playlist_label">Playlist</string>
+    <string name="undo_button_text">Undo</string>
+    <string name="edit_button_text">Edit</string>
+    <string name="upload_button_text">Upload</string>
+</resources>
