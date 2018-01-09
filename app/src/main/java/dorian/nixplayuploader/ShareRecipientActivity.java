@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -20,7 +21,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
@@ -178,6 +178,8 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
         final View imageContainer = findViewById(R.id.image_container);
 
+        final View playlistContainer = findViewById(R.id.playlist_container);
+
         // Set the image
         ViewTreeObserver vto = primaryImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
@@ -195,6 +197,12 @@ public class ShareRecipientActivity extends AppCompatActivity {
                     protected void onPreExecute() {
                         progress.setVisibility(View.VISIBLE);
                         container.setVisibility(View.INVISIBLE);
+
+                        playlistContainer.setVisibility(View.INVISIBLE);
+
+                        revertButton.setVisibility(View.INVISIBLE);
+                        editButton.setVisibility(View.INVISIBLE);
+                        uploadButton.setVisibility(View.INVISIBLE);
                     }
 
                     @Override
@@ -219,6 +227,16 @@ public class ShareRecipientActivity extends AppCompatActivity {
                     @Override
                     protected void onPostExecute(Bitmap bitmap) {
                         primaryImage.setImageBitmap(bitmap);
+
+                        Point size = new Point();
+                        getWindowManager().getDefaultDisplay().getSize(size);
+                        int offscreen = size.y;
+
+                        slideFromBottom(playlistContainer, 0, offscreen);
+
+                        slideFromBottom(revertButton, 150, offscreen);
+                        slideFromBottom(editButton, 300, offscreen);
+                        slideFromBottom(uploadButton, 450, offscreen);
 
                         container.setVisibility(View.VISIBLE);
                         container.setAlpha(0F);
@@ -253,6 +271,17 @@ public class ShareRecipientActivity extends AppCompatActivity {
         initializePlaylistsAsync();
     }
 
+    private void slideFromBottom(View view, long delay, int offscreen) {
+        float oldY = view.getY();
+        view.setY(offscreen);
+
+        view.setVisibility(View.VISIBLE);
+        view.animate()
+                .setStartDelay(delay)
+                .y(oldY)
+        ;
+    }
+
     private void revertChanges() {
         StreamSource source = new StreamSource() {
             @Override
@@ -284,6 +313,10 @@ public class ShareRecipientActivity extends AppCompatActivity {
     }
 
     private void initializePlaylistsAsync() {
+        final PlaylistSpinnerAdapter adapter = new PlaylistSpinnerAdapter(ShareRecipientActivity.this, android.R.layout.simple_spinner_item, playlistSpinner);
+        playlistSpinner.setAdapter(adapter);
+
+
         new AsyncTask<Void, Void, Playlist[]>() {
             @Override
             protected void onPreExecute() {
@@ -332,8 +365,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
                     return;
                 }
 
-                ArrayAdapter<Playlist> adapter = new PlaylistSpinnerAdapter(ShareRecipientActivity.this, android.R.layout.simple_spinner_item, playlists);
-                playlistSpinner.setAdapter(adapter);
+                adapter.setPlaylists(playlists);
 
                 if (defaults.getPlaylistId() != ShareDefaults.NO_PLAYLIST) {
                     for (int i = 0; i < playlists.length; i++) {
