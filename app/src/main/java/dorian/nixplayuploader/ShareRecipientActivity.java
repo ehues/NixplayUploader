@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.function.Consumer;
 
 import dorian.nixplay.Dorian;
@@ -83,12 +84,14 @@ public class ShareRecipientActivity extends AppCompatActivity {
     private File originalImage;
 
     /**
-     * File containing a modified version of the image. Will be null until the user attempts
-     * an edit.
+     * Files containing a modified version of the image. The topmost entry on the stack is
+     * the current value, the others are the undo stack.
      */
-    private Optional<File> workingImageOpt = Optional.empty();
+    private Stack<File> imageEdits = new Stack<>();
+
+
     private Button uploadButton;
-    private Button revertButton;
+    private Button undoEditButton;
 
 
     @SuppressLint("WrongViewCast")
@@ -125,8 +128,8 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
         playlistSpinner = findViewById(R.id.playlist_spinner);
 
-        revertButton = findViewById(R.id.undo_button);
-        revertButton.setOnClickListener(new View.OnClickListener() {
+        undoEditButton = findViewById(R.id.undo_button);
+        undoEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 revertChanges();
@@ -200,7 +203,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
                         playlistContainer.setVisibility(View.INVISIBLE);
 
-                        revertButton.setVisibility(View.INVISIBLE);
+                        undoEditButton.setVisibility(View.INVISIBLE);
                         editButton.setVisibility(View.INVISIBLE);
                         uploadButton.setVisibility(View.INVISIBLE);
                     }
@@ -234,7 +237,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
                         slideFromBottom(playlistContainer, 0, offscreen);
 
-                        slideFromBottom(revertButton, 150, offscreen);
+                        slideFromBottom(undoEditButton, 150, offscreen);
                         slideFromBottom(editButton, 300, offscreen);
                         slideFromBottom(uploadButton, 450, offscreen);
 
@@ -283,15 +286,35 @@ public class ShareRecipientActivity extends AppCompatActivity {
     }
 
     private void revertChanges() {
-        StreamSource source = new StreamSource() {
-            @Override
-            public InputStream openStream() throws IOException {
-                return new FileInputStream(originalImage);
-            }
-        };
+        // Revert the edit
+        if (imageEdits.size() > 0) {
+            File oldVal = imageEdits.pop();
+            oldVal.delete();
+        }
 
+        // Get the current version of the image: either the most recent edit or the original
+        StreamSource currentImage;
+        if (imageEdits.isEmpty()) {
+            currentImage = new StreamSource() {
+                @Override
+                public InputStream openStream() throws IOException {
+                    return new FileInputStream(originalImage);
+                }
+            };
+        }
+        else {
+            final File newVal = imageEdits.peek();
+            currentImage = new StreamSource() {
+                @Override
+                public InputStream openStream() throws IOException {
+                    return new FileInputStream(newVal);
+                }
+            };
+        }
+
+        // Display the current version of the image
         try {
-            Bitmap bitmap = decodeSampledBitmapFromResource(source,
+            Bitmap bitmap = decodeSampledBitmapFromResource(currentImage,
                     primaryImage.getWidth(), primaryImage.getHeight(), progress
             );
 
@@ -301,15 +324,8 @@ public class ShareRecipientActivity extends AppCompatActivity {
             return;
         }
 
-        workingImageOpt.ifPresent(new Consumer<File>() {
-                @Override
-                public void accept(File file) {
-                    file.delete();
-                }
-        });
-        workingImageOpt = Optional.empty();
 
-        revertButton.setEnabled(false);
+        undoEditButton.setEnabled(imageEdits.size() > 0);
     }
 
     private void initializePlaylistsAsync() {
@@ -380,13 +396,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
     }
 
     private void startEdit() {
-        workingImageOpt.ifPresent(new Consumer<File>() {
-            @Override
-            public void accept(File file) {
-                file.delete();
-            }
-        });
-
+        // Create a temp file to store the result of the edit
         File destination = null;
         try {
             destination = File.createTempFile("from-share", "modified", getCacheDir());
@@ -395,9 +405,18 @@ public class ShareRecipientActivity extends AppCompatActivity {
             Log.e(TAG, "startEdit: ", e);
         }
 
-        workingImageOpt = Optional.of(destination);
+        // Choose the file we're going to pass to UCrop for editing
+        File currentImage;
+        if (imageEdits.isEmpty()) {
+            currentImage = originalImage;
+        }
+        else {
+            currentImage = imageEdits.peek();
+        }
 
-        final UCrop uCropBuilder = UCrop.of(Uri.fromFile(originalImage), Uri.fromFile(destination));
+        imageEdits.push(destination);
+
+        final UCrop uCropBuilder = UCrop.of(Uri.fromFile(currentImage), Uri.fromFile(destination));
 
         final ArrayList<AspectRatio> ratios = new ArrayList<>();
         ratios.add(new AspectRatio("Landscape", 4, 3));
@@ -473,21 +492,22 @@ public class ShareRecipientActivity extends AppCompatActivity {
         ShareDefaultsManager.saveDefaults(this, defaults);
 
         String filenameInCacheDir;
-        if (workingImageOpt.isPresent()) {
-            filenameInCacheDir = workingImageOpt.get().getName();
+        if (imageEdits.isEmpty()) {
+            filenameInCacheDir = originalImage.getName();
         }
         else {
-            filenameInCacheDir = originalImage.getName();
+            File current = imageEdits.pop();
+            filenameInCacheDir = current.getName();
+
+            // Clear out the previous versions of the image
+            for (File edit : imageEdits) {
+                edit.delete();
+            }
+
+            originalImage.delete();
         }
 
         UploadService.sendIntent(this,"zzz.jpeg", filenameInCacheDir, playlist);
-
-        workingImageOpt.ifPresent(new Consumer<File>() {
-            @Override
-            public void accept(File file) {
-                originalImage.delete();
-            }
-        });
 
         finish();
     }
@@ -555,33 +575,46 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP) {
+        if (requestCode == UCrop.REQUEST_CROP) {
 
-            StreamSource source = new StreamSource() {
-                @Override
-                public InputStream openStream() throws IOException {
-                    return new FileInputStream(workingImageOpt.get());
+            if (resultCode == RESULT_OK) {
+                Log.i(TAG, "onActivityResult: RESULT_OK from UCrop");
+                StreamSource source = new StreamSource() {
+                    @Override
+                    public InputStream openStream() throws IOException {
+                        return new FileInputStream(imageEdits.peek());
+                    }
+                };
+
+                try {
+                    Bitmap bitmap = decodeSampledBitmapFromResource(source,
+                            primaryImage.getWidth(), primaryImage.getHeight(), progress
+                    );
+
+                    primaryImage.setImageBitmap(bitmap);
+                } catch (IOException e) {
+                    Log.e(TAG, "onActivityResult: failed to set primary image", e);
+                    return;
                 }
-            };
+            }
+            else {
+                Log.i(TAG, "onActivityResult: Non-OK from UCrop");
 
-            try {
-                Bitmap bitmap = decodeSampledBitmapFromResource(source,
-                        primaryImage.getWidth(), primaryImage.getHeight(), progress
-                );
+                // Roll back the edit request
+                if (imageEdits.size() > 0) {
+                    imageEdits.pop();
+                }
 
-                primaryImage.setImageBitmap(bitmap);
-            } catch (IOException e) {
-                Log.e(TAG, "onActivityResult: failed to set primary image", e);
-                return;
+                // We don't have to update the primaryImage because we know it hasn't changed
             }
 
-            revertButton.setEnabled(true);
-
-        } else if (resultCode == UCrop.RESULT_ERROR) {
-            final Throwable cropError = UCrop.getError(data);
+            undoEditButton.setEnabled(imageEdits.size() > 0);
         }
-        else if (requestCode == RESULT_CREDENTIALS_UPDATED && resultCode == RESULT_CREDENTIALS_UPDATED) {
-            initializePlaylistsAsync();
+        else if (requestCode == RESULT_CREDENTIALS_UPDATED) {
+            Log.i(TAG, "onActivityResult: Credential update");
+            if  (resultCode == RESULT_CREDENTIALS_UPDATED) {
+                initializePlaylistsAsync();
+            }
         }
     }
 }
