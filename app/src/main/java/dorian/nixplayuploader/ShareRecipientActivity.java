@@ -100,8 +100,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         if (!CredentialsManager.loadActivityLog(this).isPresent()) {
-            Intent startCredsIntent = new Intent("update", null, this, InitializationActivity.class);
-            startActivityForResult(startCredsIntent, RESULT_CREDENTIALS_UPDATED);
+            showCredentialActivity();
         }
 
         setContentView(R.layout.activity_share_recipient);
@@ -153,6 +152,8 @@ public class ShareRecipientActivity extends AppCompatActivity {
                                         }
         );
 
+
+        // Save the image
         new AsyncTask<Void, Void, Boolean>() {
 
             @Override
@@ -183,7 +184,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
         final View playlistContainer = findViewById(R.id.playlist_container);
 
-        // Set the image
+        // Draw the image
         ViewTreeObserver vto = primaryImage.getViewTreeObserver();
         vto.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @SuppressLint("StaticFieldLeak")
@@ -274,6 +275,11 @@ public class ShareRecipientActivity extends AppCompatActivity {
         initializePlaylistsAsync();
     }
 
+    private void showCredentialActivity() {
+        Intent startCredsIntent = new Intent("update", null, this, StoreUsernameAndPasswordActivity.class);
+        startActivityForResult(startCredsIntent, RESULT_CREDENTIALS_UPDATED);
+    }
+
     private void slideFromBottom(View view, long delay, int offscreen) {
         float oldY = view.getY();
         view.setY(offscreen);
@@ -352,6 +358,9 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
                 LoginResult loginResult = new DorianBuilder().build(credsOpt.get().username, credsOpt.get().password);
                 if (loginResult.failed()) {
+                    if (loginResult.failedDueToIncorrectUsernameAndPassword()) {
+                        showCredentialActivity();
+                    }
                     return null;
                 }
 

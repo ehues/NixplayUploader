@@ -18,4 +18,5 @@
     <string name="undo_button_text">Undo</string>
     <string name="edit_button_text">Edit</string>
     <string name="upload_button_text">Upload</string>
+    <string name="login_preamble">Enter your username and password for the Nix website or app.</string>
 </resources>

@@ -35,15 +35,11 @@ public class LoginResult extends NetworkResult {
         return new LoginResult(false, e, resp, null);
     }
 
-    public static LoginResult loginFailure(Response r) {
-        return new LoginResult(false, null, r, null);
-    }
-
     /**
      * @return true if Nix could be contacted, but the login failed because the username/password
      *      were incorrect
      */
-    public boolean loginFailed() {
+    public boolean failedDueToIncorrectUsernameAndPassword() {
         if (response.isPresent()) {
             return response.get().code() == 401;
         }

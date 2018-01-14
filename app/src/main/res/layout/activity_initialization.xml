@@ -8,7 +8,14 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="dorian.nixplayuploader.InitializationActivity">
+    tools:context="dorian.nixplayuploader.StoreUsernameAndPasswordActivity">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingEnd="@dimen/activity_vertical_margin"
+        android:text="@string/login_preamble"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
     <!-- Login progress -->
     <ProgressBar
@@ -22,7 +29,7 @@
     <ScrollView
         android:id="@+id/login_form"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:id="@+id/email_login_form"
@@ -67,8 +74,7 @@
                 android:id="@+id/loginFailureExplanation"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:text="TextView" />
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/email_sign_in_button"

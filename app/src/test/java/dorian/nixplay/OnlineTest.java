@@ -47,7 +47,7 @@ public class OnlineTest {
         LoginResult login = d2.login("zzz" + USERNAME, "123");
 
         assertFalse(login.succeeded());
-        assertTrue(login.loginFailed());
+        assertTrue(login.failedDueToIncorrectUsernameAndPassword());
     }
 
     @Test

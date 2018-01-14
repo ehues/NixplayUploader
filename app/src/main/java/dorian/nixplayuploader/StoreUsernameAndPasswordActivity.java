@@ -32,7 +32,7 @@ import okhttp3.Response;
  *
  * Mostly lifted from the login sample app.
  */
-public class InitializationActivity extends AppCompatActivity {
+public class StoreUsernameAndPasswordActivity extends AppCompatActivity {
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
@@ -237,7 +237,7 @@ public class InitializationActivity extends AppCompatActivity {
                 creds.username = mEmail;
                 creds.password = mPassword;
 
-                CredentialsManager.saveActivityLog(InitializationActivity.this, creds);
+                CredentialsManager.saveActivityLog(StoreUsernameAndPasswordActivity.this, creds);
 
                 setResult(ShareRecipientActivity.RESULT_CREDENTIALS_UPDATED);
                 finish();
