@@ -1,16 +1,15 @@
 package dorian.nixplayuploader.settings;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.Optional;
 
 /**
  * Shared implementation of serializing/deserializing an object.
@@ -38,17 +37,18 @@ abstract class SerializationStorage {
 
     }
 
-    public static <T extends Serializable> Optional<T> load(Context context, String filename, Class<T> type) {
+    @Nullable
+    public static <T extends Serializable> T load(Context context, String filename, Class<T> type) {
         FileInputStream fis = null;
         ObjectInputStream is = null;
         try {
             fis = context.openFileInput(filename);
             is = new ObjectInputStream(fis);
-            return Optional.of((T) is.readObject());
+            return (T) is.readObject();
 
         } catch (Exception e) {
             Log.e(TAG, "loadRegistry: ", e);
-            return Optional.empty();
+            return null;
 
         } finally {
             if (is != null) {

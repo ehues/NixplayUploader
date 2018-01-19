@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import okhttp3.Response;
 
@@ -17,12 +16,16 @@ import okhttp3.Response;
  */
 public class NetworkResult {
     protected final boolean succeeded;
-    protected final Optional<Exception> exception;
-    protected final Optional<Response> response;
+
+    @Nullable
+    protected final Exception exceptionOpt;
+
+    @Nullable
+    protected final Response responseOpt;
 
     NetworkResult(boolean succeeded, @Nullable Exception ex, @Nullable Response response) {
-        this.exception = Optional.ofNullable(ex);
-        this.response = Optional.ofNullable(response);
+        this.exceptionOpt = ex;
+        this.responseOpt = response;
         this.succeeded = succeeded;
     }
 
@@ -38,24 +41,27 @@ public class NetworkResult {
      * Return true if network issues caused the failure.
      */
     public boolean failedDueToNetworkIssue() {
-        return failed() && getException().isPresent() && getException().get() instanceof IOException;
+        return failed() && exceptionOpt != null && exceptionOpt instanceof IOException;
     }
 
     /**
      * Return true if we got an unexpected response from the Nix infrastructure.
      */
     public boolean failedDueToCommunicationConfusion() {
-        return failed() && (
-                (getException().isPresent() && getException().get() instanceof JSONException)
-                || (getResponse().isPresent())
+        return failed()
+                && (
+                        exceptionOpt instanceof JSONException
+                        || responseOpt != null
         );
     }
 
-    public Optional<Response> getResponse() {
-        return response;
+    @Nullable
+    public Response getResponse() {
+        return responseOpt;
     }
 
-    public Optional<Exception> getException() {
-        return exception;
+    @Nullable
+    public Exception getException() {
+        return exceptionOpt;
     }
 }

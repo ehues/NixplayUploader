@@ -3,7 +3,6 @@ package dorian.nixplay;
 import android.util.Log;
 
 import java.io.IOException;
-import java.util.Optional;
 
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -74,7 +73,7 @@ public class UploadProgressInterceptor implements Interceptor {
 
                     long now = System.currentTimeMillis();
                     if (nextUpdateAllowedAfter < now) {
-                        toCall.updateProgress(UploadProgressCallback.Stage.UPLOAD, Optional.of(transferred));
+                        toCall.updateProgress(UploadProgressCallback.Stage.UPLOAD, transferred);
                         nextUpdateAllowedAfter = now + 500;
                         Log.i(TAG, "write: wrote");
                     }
@@ -85,7 +84,7 @@ public class UploadProgressInterceptor implements Interceptor {
                     try {
                         super.close();
                     } finally {
-                        toCall.updateProgress(UploadProgressCallback.Stage.DONE, Optional.<Long>empty());
+                        toCall.updateProgress(UploadProgressCallback.Stage.DONE, null);
                     }
                 }
             });

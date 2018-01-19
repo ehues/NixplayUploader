@@ -2,6 +2,7 @@ package dorian.nixplayuploader.settings;
 
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 
 import java.util.Optional;
 
@@ -13,7 +14,8 @@ public class CredentialsManager {
         SerializationStorage.save(context, CREDENTIALS_FILENAME, credentials);
     }
 
-    public static Optional<Credentials> loadActivityLog(Context context) {
+    @Nullable
+    public static Credentials loadActivityLog(Context context) {
         return SerializationStorage.load(context, CREDENTIALS_FILENAME, Credentials.class);
     }
 

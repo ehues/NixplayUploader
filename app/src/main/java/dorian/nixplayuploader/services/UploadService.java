@@ -16,7 +16,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 
 import dorian.nixplay.Dorian;
 import dorian.nixplay.DorianBuilder;
@@ -68,7 +67,7 @@ public class UploadService extends IntentService {
         final int NOTIFICATION_ID = 11;
 
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.ic_cloud_upload_white_24px)
+                .setSmallIcon(R.drawable.ic_cloud_upload_white_raster)
                 .setContentTitle("Uploading to Nix")
                 .setContentText("Uploading images");
 
@@ -87,8 +86,8 @@ public class UploadService extends IntentService {
         final File imageToShare = new File(getCacheDir(), fileInCache);
 
         try {
-            Optional<Credentials> credsOpt = CredentialsManager.loadActivityLog(this);
-            if (!credsOpt.isPresent()) {
+            Credentials credsOpt = CredentialsManager.loadActivityLog(this);
+            if (credsOpt == null) {
                 // Shouldn't happen, since our UI activity ensures we have valid credentials
                 Log.i(TAG, "onHandleIntent: No credentials");
                 toast("No credentials (!?");
@@ -99,13 +98,13 @@ public class UploadService extends IntentService {
 
             Dorian d2;
             {
-                LoginResult loginResult = new DorianBuilder().build(credsOpt.get().username, credsOpt.get().password);
+                LoginResult loginResult = new DorianBuilder().build(credsOpt.username, credsOpt.password);
                 if (loginResult.failed()) {
                     sendFailureReason(loginResult);
                     return;
                 }
 
-                d2 = loginResult.loggedInDorian().get();
+                d2 = loginResult.loggedInDorian();
             }
 
             final NotificationManagerCompat notMan = NotificationManagerCompat.from(this);
@@ -152,7 +151,7 @@ public class UploadService extends IntentService {
         if (loginResult.failedDueToCommunicationConfusion()) {
             toast("Picture upload failed. Unexpected response from Nix.");
 
-            Response resp = loginResult.getResponse().get();
+            Response resp = loginResult.getResponse();
             Log.e(TAG, "sendFailureReason: " + resp.code() + ' ' + resp.message());
             try {
                 Log.e(TAG, "sendFailureReason: " + resp.body().string());

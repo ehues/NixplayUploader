@@ -3,8 +3,6 @@ package dorian.nixplay.results;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import java.util.Optional;
-
 import okhttp3.Response;
 
 /**
@@ -13,7 +11,7 @@ import okhttp3.Response;
  */
 public class FetchResult<T> extends NetworkResult {
 
-    private final Optional<T> value;
+    private final T valueOpt;
 
     public static <T> FetchResult<T> success(@NonNull Response response, @NonNull T value) {
         return new FetchResult<>(true, response, null, value);
@@ -34,10 +32,11 @@ public class FetchResult<T> extends NetworkResult {
     public FetchResult(boolean succeeded, @Nullable Response response, @Nullable Exception ex, @Nullable T value) {
         super(succeeded, ex, response);
 
-        this.value = Optional.ofNullable(value);
+        this.valueOpt = value;
     }
 
-    public Optional<T> getValue() {
-        return value;
+    @Nullable
+    public T getValue() {
+        return valueOpt;
     }
 }

@@ -2,24 +2,24 @@ package dorian.nixplay.results;
 
 import android.support.annotation.Nullable;
 
-import java.util.Optional;
-
 import dorian.nixplay.Dorian;
 import okhttp3.Response;
 
 public class LoginResult extends NetworkResult {
 
-    private final Optional<Dorian> dorianOpt;
+    @Nullable
+    private final Dorian dorianOpt;
 
     LoginResult(boolean succeeded, @Nullable Exception ex, @Nullable Response response, @Nullable Dorian dorian) {
         super(succeeded, ex, response);
-        this.dorianOpt = Optional.ofNullable(dorian);
+        this.dorianOpt = dorian;
     }
 
     /**
-     * @return An optional containing the logged in dorianOpt (empty if the login failed).
+     * @return An optional containing the logged in dorianOpt (null if the login failed).
      */
-    public Optional<Dorian> loggedInDorian() {
+    @Nullable
+    public Dorian loggedInDorian() {
         return dorianOpt;
     }
 
@@ -40,10 +40,12 @@ public class LoginResult extends NetworkResult {
      *      were incorrect
      */
     public boolean failedDueToIncorrectUsernameAndPassword() {
-        if (response.isPresent()) {
-            return response.get().code() == 401;
+        if (responseOpt == null) {
+            // We didn't receive a response, meaning we couldn't sent auth tokens, etc.
+            return false;
         }
 
-        return false;
+
+        return responseOpt.code() == 401;
     }
 }

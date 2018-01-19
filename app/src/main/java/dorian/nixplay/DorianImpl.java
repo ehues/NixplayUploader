@@ -9,7 +9,6 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -194,10 +193,10 @@ class DorianImpl implements Dorian {
         UploadHelper uploadHelper = makeUploadHelper(up, cfg);
         try {
             String uploadToken = getUploadToken(new Playlists(Collections.singletonList(playlist)));
-            uploadHelper.updateProgress(UploadProgressCallback.Stage.REQ_UPLOAD, Optional.<Long>empty());
+            uploadHelper.updateProgress(UploadProgressCallback.Stage.REQ_UPLOAD, null);
 
             JSONObject s3Params = getS3Params(uploadToken, up.getFilename(), up.getContentLength());
-            uploadHelper.updateProgress(UploadProgressCallback.Stage.S3_PARAMS, Optional.<Long>empty());
+            uploadHelper.updateProgress(UploadProgressCallback.Stage.S3_PARAMS, null);
 
             uploadToS3(s3Params, up, uploadHelper);
 
@@ -231,7 +230,7 @@ class DorianImpl implements Dorian {
             totalWork = (long)(bytes * 1.2);
         }
 
-        void updateProgress(UploadProgressCallback.Stage stage, Optional<Long> bytesTransferred) {
+        void updateProgress(UploadProgressCallback.Stage stage, @Nullable Long bytesTransferredOpt) {
             if (progressCallback == null) {
                 return;
             }
@@ -246,7 +245,7 @@ class DorianImpl implements Dorian {
                     break;
 
                 case UPLOAD:
-                    progressCallback.setProgress(totalWork, s3ParmsWork + bytesTransferred.get(), stage);
+                    progressCallback.setProgress(totalWork, s3ParmsWork + bytesTransferredOpt, stage);
                     break;
 
                 case DONE:

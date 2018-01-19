@@ -56,9 +56,9 @@ public class OnlineTest {
 
         assertTrue(r.succeeded());
 
-        Dorian dorian = r.loggedInDorian().get();
+        Dorian dorian = r.loggedInDorian();
 
-        Playlists playlists = dorian.playlists().getValue().get();
+        Playlists playlists = dorian.playlists().getValue();
         assertTrue(playlists.size() > 0);
 
         Playlist testPlaylist = null;

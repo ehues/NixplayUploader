@@ -9,14 +9,20 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.OpenableColumns;
+import android.support.annotation.ColorInt;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ShareCompat;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.animation.LinearOutSlowInInterpolator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -41,9 +47,7 @@ import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Optional;
 import java.util.Stack;
-import java.util.function.Consumer;
 
 import dorian.nixplay.Dorian;
 import dorian.nixplay.DorianBuilder;
@@ -76,7 +80,8 @@ public class ShareRecipientActivity extends AppCompatActivity {
     /**
      * Size of the source image.
      */
-    private Optional<Rect> originalImageSizeOpt = Optional.empty();
+    @Nullable
+    private Rect originalImageSizeOpt = null;
 
     /**
      * File where we've cached the shared image. It's in the original form (ie, unmodified).
@@ -99,7 +104,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        if (!CredentialsManager.loadActivityLog(this).isPresent()) {
+        if (CredentialsManager.loadActivityLog(this) == null) {
             showCredentialActivity();
         }
 
@@ -178,7 +183,22 @@ public class ShareRecipientActivity extends AppCompatActivity {
         }.execute();
 
         progress.setMax(10);
-        progress.setProgress(2, true);
+
+
+        incrProgress(progress, 1);
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                incrProgress(progress, 1);
+            }
+        }, 75);
+
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                incrProgress(progress, 1);
+            }
+        }, 150);
 
         final View imageContainer = findViewById(R.id.image_container);
 
@@ -280,15 +300,20 @@ public class ShareRecipientActivity extends AppCompatActivity {
         startActivityForResult(startCredsIntent, RESULT_CREDENTIALS_UPDATED);
     }
 
-    private void slideFromBottom(View view, long delay, int offscreen) {
-        float oldY = view.getY();
-        view.setY(offscreen);
+    private void slideFromBottom(final View view, final long delay, final int offscreen) {
+        new Handler().postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                float oldY = view.getY();
+                view.setY(offscreen);
 
-        view.setVisibility(View.VISIBLE);
-        view.animate()
-                .setStartDelay(delay)
-                .y(oldY)
-        ;
+                view.setVisibility(View.VISIBLE);
+                view.animate()
+                        .setInterpolator(new LinearOutSlowInInterpolator())
+                        .y(oldY)
+                ;
+            }
+        }, delay);
     }
 
     private void revertChanges() {
@@ -342,8 +367,8 @@ public class ShareRecipientActivity extends AppCompatActivity {
         new AsyncTask<Void, Void, Playlist[]>() {
             @Override
             protected void onPreExecute() {
-                Optional<Credentials> credsOpt = CredentialsManager.loadActivityLog(ShareRecipientActivity.this);
-                if (!credsOpt.isPresent()) {
+                Credentials credsOpt = CredentialsManager.loadActivityLog(ShareRecipientActivity.this);
+                if (credsOpt == null) {
                     Log.i(TAG, "onHandleIntent: No credentials");
                     Toast.makeText(ShareRecipientActivity.this, "Need credentials", Toast.LENGTH_LONG).show();
                 }
@@ -351,12 +376,12 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
             @Override
             protected Playlist[] doInBackground(Void... voids) {
-                Optional<Credentials> credsOpt = CredentialsManager.loadActivityLog(ShareRecipientActivity.this);
-                if (!credsOpt.isPresent()) {
+                Credentials credsOpt = CredentialsManager.loadActivityLog(ShareRecipientActivity.this);
+                if (credsOpt == null) {
                     return null;
                 }
 
-                LoginResult loginResult = new DorianBuilder().build(credsOpt.get().username, credsOpt.get().password);
+                LoginResult loginResult = new DorianBuilder().build(credsOpt.username, credsOpt.password);
                 if (loginResult.failed()) {
                     if (loginResult.failedDueToIncorrectUsernameAndPassword()) {
                         showCredentialActivity();
@@ -364,14 +389,14 @@ public class ShareRecipientActivity extends AppCompatActivity {
                     return null;
                 }
 
-                Dorian dorian = loginResult.loggedInDorian().get();
+                Dorian dorian = loginResult.loggedInDorian();
 
                 FetchResult<Playlists> playlistsFetchResult = dorian.playlists();
                 if (playlistsFetchResult.failed()) {
                     return null;
                 }
 
-                ArrayList<Playlist> playlists = new ArrayList<>(playlistsFetchResult.getValue().get().all());
+                ArrayList<Playlist> playlists = new ArrayList<>(playlistsFetchResult.getValue().all());
 
                 Collections.sort(playlists, new Comparator<Playlist>() {
                     @Override
@@ -431,16 +456,30 @@ public class ShareRecipientActivity extends AppCompatActivity {
         ratios.add(new AspectRatio("Landscape", 4, 3));
         ratios.add(new AspectRatio("Portrait", 3, 4));
 
-        originalImageSizeOpt.ifPresent(new Consumer<Rect>() {
-            @Override
-            public void accept(Rect rect) {
-                ratios.add(0, new AspectRatio("Original", rect.width(), rect.height()));
-            }
-        });
+        if (originalImageSizeOpt != null) {
+            ratios.add(0, new AspectRatio("Original", originalImageSizeOpt.width(), originalImageSizeOpt.height()));
+        }
 
         UCrop.Options opts = new UCrop.Options();
 
         opts.setAspectRatioOptions(0, ratios.toArray(new AspectRatio[ratios.size()]));
+
+        View rootView = primaryImage.getRootView();
+        if (rootView != null) {
+            Drawable background = rootView.getBackground();
+            if (background instanceof ColorDrawable) {
+                @ColorInt int bg = ((ColorDrawable) background).getColor();
+                opts.setRootViewBackgroundColor(bg);
+            }
+        }
+
+
+        @ColorInt int colorPrimary = ContextCompat.getColor(this, R.color.colorPrimary);
+        @ColorInt int colorPrimaryDark = ContextCompat.getColor(this, R.color.colorPrimaryDark);
+        @ColorInt int colorAccent = ContextCompat.getColor(this, R.color.colorAccent);
+        opts.setToolbarColor(colorPrimary);
+        opts.setStatusBarColor(colorPrimaryDark);
+        opts.setActiveWidgetColor(colorAccent);
 
         // Enabling freestyle crop disables the other gestures
 //        opts.setFreeStyleCropEnabled(true);
@@ -478,14 +517,13 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
     @NonNull
     private ShareDefaults loadDefaults() {
-        Optional<ShareDefaults> defaultsOpt = ShareDefaultsManager.loadDefaults(this);
+        ShareDefaults defaultsOpt = ShareDefaultsManager.loadDefaults(this);
 
-        if (defaultsOpt.isPresent()) {
-            return defaultsOpt.get();
+        if (defaultsOpt == null) {
+            return new ShareDefaults();
         }
 
-        ShareDefaults defaults = new ShareDefaults();
-        return defaults;
+        return defaultsOpt;
     }
 
     private void doUpload() {
@@ -517,6 +555,9 @@ public class ShareRecipientActivity extends AppCompatActivity {
         }
 
         UploadService.sendIntent(this,"zzz.jpeg", filenameInCacheDir, playlist);
+
+        Toast toast = Toast.makeText(this, "Starting upload...", Toast.LENGTH_LONG);
+        toast.show();
 
         finish();
     }
@@ -557,11 +598,11 @@ public class ShareRecipientActivity extends AppCompatActivity {
         try (InputStream inputStream = inputSource.openStream()) {
             BitmapFactory.decodeStream(inputStream, null, options);
             Log.i(TAG, "first decode: " + (System.currentTimeMillis() - before));
-            progress.setProgress(3, true);
+            incrProgress(progress, 1);
         }
 
         // Calculate inSampleSize
-        originalImageSizeOpt = Optional.of(new Rect(0, 0, options.outWidth, options.outHeight));
+        originalImageSizeOpt = new Rect(0, 0, options.outWidth, options.outHeight);
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
         // Decode bitmap with inSampleSize set
@@ -571,15 +612,30 @@ public class ShareRecipientActivity extends AppCompatActivity {
         try (InputStream inputStream = inputSource.openStream()) {
             bitmap = BitmapFactory.decodeStream(inputStream, null, options);
             Log.i(TAG, "resize: " + (System.currentTimeMillis() - before));
-            progress.setProgress(6, true);
+            incrProgress(progress, 3);
         }
 
         before = System.currentTimeMillis();
         Bitmap toReturn = ImageResizer.rotateImageIfRequired(bitmap, inputSource.openStream());
         Log.i(TAG, "rotate: " + (System.currentTimeMillis() - before));
-        progress.setProgress(10, true);
+        incrProgress(progress, 4);
 
         return toReturn;
+    }
+
+    /**
+     * Convenience method to increment our progress AND animate it. The default
+     * {@link ProgressBar#incrementProgressBy(int)} doesn't animate.
+     */
+    private void incrProgress(ProgressBar progress, int delta) {
+        int current = progress.getProgress();
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            progress.setProgress(current + delta, true);
+        }
+        else {
+            progress.setProgress(current + delta);
+        }
     }
 
     @Override

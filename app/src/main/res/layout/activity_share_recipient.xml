@@ -23,6 +23,7 @@
                 android:layout_marginBottom="8dp"
                 android:layout_marginTop="8dp"
                 android:background="@android:color/black"
+                android:elevation="4dp"
                 android:orientation="vertical"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintDimensionRatio="4:3"
@@ -117,10 +118,11 @@
 
         <Button
             android:id="@+id/upload_button"
-            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            style="@style/RaisedButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:elevation="4dp"
             android:enabled="false"
             android:text="@string/upload_button_text" />
     </LinearLayout>
