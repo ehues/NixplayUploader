@@ -20,7 +20,7 @@ It should be possible to fetch and build NixplayUploader directly from Android S
 
 # Running Tests
 
-There's only one test class, named [OnlineTest](NixplayUploader/app/src/test/java/dorian/nixplay/OnlineTest.java). It verifies that our Nix API works by doing a few queries and uploading a test image. You must provide it with two environment variables: `NIX_USERNAME` (the username of a working Nix account), and `NIX_PASSWORD` (the password for that account). Defining the variables in the Android Studio config prevents them from showing up on Github. 
+There's only one test class, named [OnlineTest](app/src/test/java/dorian/nixplay/OnlineTest.java). It verifies that our Nix API works by doing a few queries and uploading a test image. You must provide it with two environment variables: `NIX_USERNAME` (the username of a working Nix account), and `NIX_PASSWORD` (the password for that account). Defining the variables in the Android Studio config prevents them from showing up on Github. 
 
 
 # Contributing
