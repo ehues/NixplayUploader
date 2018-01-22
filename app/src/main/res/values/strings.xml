@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">NixplayUploader</string>
+    <string name="app_name">Nixplay Uploader</string>
 
     <!-- Strings related to login -->
     <string name="prompt_email">Email or Username</string>
