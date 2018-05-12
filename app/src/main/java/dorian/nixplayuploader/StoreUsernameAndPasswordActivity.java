@@ -132,7 +132,7 @@ public class StoreUsernameAndPasswordActivity extends AppCompatActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuItem menuItem = menu.add(Menu.NONE, MENU_DELETE, 0, "Delete");
+        MenuItem menuItem = menu.add(Menu.NONE, MENU_DELETE, 0, R.string.credentials_delete);
         menuItem.setShowAsActionFlags(MenuItem.SHOW_AS_ACTION_IF_ROOM);
 
         return super.onCreateOptionsMenu(menu);

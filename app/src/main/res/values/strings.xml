@@ -10,13 +10,24 @@
     <string name="error_invalid_password">This password is too short</string>
     <string name="error_incorrect_password">This password is incorrect</string>
     <string name="error_field_required">This field is required</string>
-    <string name="permission_rationale">"Contacts permissions are needed for providing email
-        completions."
-    </string>
     <string name="image_to_share">Image to share</string>
     <string name="playlist_label">Playlist</string>
     <string name="undo_button_text">Undo</string>
     <string name="edit_button_text">Edit</string>
     <string name="upload_button_text">Upload</string>
     <string name="login_preamble">Enter your username and password for the Nix website or app.</string>
+    <string name="notification_upload_title">Uploading to Nix</string>
+    <string name="notification_upload_content">Uploading images</string>
+    <string name="toast_upload_succeeded">Upload succeeded</string>
+    <string name="toast_upload_failed_network">Picture upload failed. Couldn\'t communicate with Nix servers.</string>
+    <string name="toast_upload_failed_nix">Picture upload failed. Unexpected response from Nix.</string>
+    <string name="toast_login_failed">Couldn\'t log in.</string>
+    <string name="toast_copy_failed">Unable to copy file for sharing</string>
+    <string name="toast_login_no_credentials">Need credentials</string>
+    <string name="editor_orientation_landscape">Landscape</string>
+    <string name="editor_orientation_portrait">Portrait</string>
+    <string name="editor_aspectratio_original">Original</string>
+    <string name="validation_missing_playlist">Select a playlist</string>
+    <string name="upload_start">Starting upload...</string>
+    <string name="credentials_delete">Delete</string>
 </resources>

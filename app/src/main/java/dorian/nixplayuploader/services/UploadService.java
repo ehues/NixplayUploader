@@ -68,8 +68,8 @@ public class UploadService extends IntentService {
 
         final NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
                 .setSmallIcon(R.drawable.ic_cloud_upload_white_raster)
-                .setContentTitle("Uploading to Nix")
-                .setContentText("Uploading images");
+                .setContentTitle(getString(R.string.notification_upload_title))
+                .setContentText(getString(R.string.notification_upload_content));
 
 
 
@@ -139,17 +139,17 @@ public class UploadService extends IntentService {
 
         Log.i(TAG, "onHandleIntent: completed successfully");
 
-        toast("Upload succeeded");
+        toast(getString(R.string.toast_upload_succeeded));
     }
 
     private void sendFailureReason(NetworkResult loginResult) {
         if (loginResult.failedDueToNetworkIssue()) {
-            toast("Picture upload failed. Couldn't communicate with Nix servers.");
+            toast(getString(R.string.toast_upload_failed_network));
             return;
         }
 
         if (loginResult.failedDueToCommunicationConfusion()) {
-            toast("Picture upload failed. Unexpected response from Nix.");
+            toast(getString(R.string.toast_upload_failed_nix));
 
             Response resp = loginResult.getResponse();
             Log.e(TAG, "sendFailureReason: " + resp.code() + ' ' + resp.message());
@@ -162,7 +162,7 @@ public class UploadService extends IntentService {
             return;
         }
 
-        toast("Couldn't log in.");
+        toast(getString(R.string.toast_login_failed));
         return;
     }
 

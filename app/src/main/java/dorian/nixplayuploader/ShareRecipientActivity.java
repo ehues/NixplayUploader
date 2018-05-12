@@ -168,7 +168,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
                     return true;
                 } catch (IOException e) {
-                    Toast.makeText(ShareRecipientActivity.this, "Unable to copy file for sharing", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ShareRecipientActivity.this, R.string.toast_copy_failed, Toast.LENGTH_LONG).show();
                     finish();
                 }
 
@@ -370,7 +370,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
                 Credentials credsOpt = CredentialsManager.loadActivityLog(ShareRecipientActivity.this);
                 if (credsOpt == null) {
                     Log.i(TAG, "onHandleIntent: No credentials");
-                    Toast.makeText(ShareRecipientActivity.this, "Need credentials", Toast.LENGTH_LONG).show();
+                    Toast.makeText(ShareRecipientActivity.this, R.string.toast_login_no_credentials, Toast.LENGTH_LONG).show();
                 }
             }
 
@@ -453,11 +453,11 @@ public class ShareRecipientActivity extends AppCompatActivity {
         final UCrop uCropBuilder = UCrop.of(Uri.fromFile(currentImage), Uri.fromFile(destination));
 
         final ArrayList<AspectRatio> ratios = new ArrayList<>();
-        ratios.add(new AspectRatio("Landscape", 4, 3));
-        ratios.add(new AspectRatio("Portrait", 3, 4));
+        ratios.add(new AspectRatio(getString(R.string.editor_orientation_landscape), 4, 3));
+        ratios.add(new AspectRatio(getString(R.string.editor_orientation_portrait), 3, 4));
 
         if (originalImageSizeOpt != null) {
-            ratios.add(0, new AspectRatio("Original", originalImageSizeOpt.width(), originalImageSizeOpt.height()));
+            ratios.add(0, new AspectRatio(getString(R.string.editor_aspectratio_original), originalImageSizeOpt.width(), originalImageSizeOpt.height()));
         }
 
         UCrop.Options opts = new UCrop.Options();
@@ -529,7 +529,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
     private void doUpload() {
         Playlist playlist = (Playlist) playlistSpinner.getSelectedItem();
         if (playlist == null) {
-            Toast.makeText(this, "Select a playlist", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.validation_missing_playlist, Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -556,7 +556,7 @@ public class ShareRecipientActivity extends AppCompatActivity {
 
         UploadService.sendIntent(this,"zzz.jpeg", filenameInCacheDir, playlist);
 
-        Toast toast = Toast.makeText(this, "Starting upload...", Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(this, R.string.upload_start, Toast.LENGTH_LONG);
         toast.show();
 
         finish();
